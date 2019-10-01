@@ -45,25 +45,6 @@ def get_accuracies(output, target, topk=(1,5)):
 
 class HockeyDataset(Dataset):
 	def __init__(self, data_file, input_length):
-		# sequence_length = input_length + 1
-
-		# texts = [[int(tok) for tok in line.strip('\n').split()] for line in open(data_file)]
-		# texts = [text for text in texts if len(text) >= sequence_length]
-		# sequences = []
-		# for text in texts:
-		# 	text_subsequences = [text[i:i+sequence_length] for i in range(len(text)-sequence_length+1)]
-		# 	sequences.extend(text_subsequences)
-		# # only collect words from sufficiently long texts
-		# tokens = sorted(list(set([token for text in texts for token in text])))
-		# tok_to_index = {tok:i for i, tok in enumerate(tokens)}
-		# index_to_tok = {i:tok for i, tok in enumerate(tokens)}
-
-		# self.num_tokens = len(tok_to_index)
-		# self.input_length = input_length
-		# self.sequence_length = sequence_length
-		# self.sequences = sequences
-		# self.tok_to_index = tok_to_index
-		# self.index_to_tok = index_to_tok
 		sequence_length = input_length + 1
 
 		all_texts = [[int(tok) for tok in line.strip('\n').split()] for line in open(data_file)]
@@ -73,7 +54,7 @@ class HockeyDataset(Dataset):
 			text_subsequences = [text[i:i+sequence_length] for i in range(len(text)-sequence_length+1)]
 			sequences.extend(text_subsequences)
 
-		self.num_tokens = max([token for text in all_texts for token in text])
+		self.num_tokens = max([token for text in all_texts for token in text])+1
 		self.input_length = input_length
 		self.sequence_length = sequence_length
 		self.sequences = sequences
@@ -133,6 +114,8 @@ class HockeyAgent:
 			num_workers=self.num_workers, shuffle=False)
 		self.model = MyLSTM(self.input_length, self.lstm_dim, self.dropout, self.num_tokens)
 		self.loss = CrossEntropyLoss()
+		
+		if torch.cuda.device_count() > 1: self.model = nn.DataParallel(self.model)
 		self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 		self.model.to(self.device)
 		self.optimizer = Adam(self.model.parameters())
