@@ -197,5 +197,4 @@ class HockeyAgent:
 			' - top 5 accuracy: '+str(round(acc5.val,5)))
 
 agent = HockeyAgent()
-# agent.run()
-agent.validate()
+agent.run()
