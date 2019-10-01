@@ -114,9 +114,9 @@ class HockeyAgent:
 			num_workers=self.num_workers, shuffle=False)
 		self.model = MyLSTM(self.input_length, self.lstm_dim, self.dropout, self.num_tokens)
 		self.loss = CrossEntropyLoss()
-		
+
 		if torch.cuda.device_count() > 1: self.model = nn.DataParallel(self.model)
-		self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		self.model.to(self.device)
 		self.optimizer = Adam(self.model.parameters())
 
