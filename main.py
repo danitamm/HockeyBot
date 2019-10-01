@@ -88,6 +88,7 @@ class MyLSTM(nn.Module):
 		self.sm = nn.Softmax(dim=1)
 
 	def forward(self, x):
+		self.lstm.flatten_parameters()
 		_, (h, _) = self.lstm(x)
 		thing = h[0,...]
 		h = h.view(h.shape[1],-1)
