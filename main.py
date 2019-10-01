@@ -85,16 +85,16 @@ class MyLSTM(nn.Module):
 			batch_first=True, num_layers=1)
 		self.drop = nn.Dropout(p=dropout)
 		self.dense = nn.Linear(lstm_dim, num_tokens)
-		self.sm = nn.Softmax(dim=1)
+		# self.sm = nn.Softmax(dim=1)
 
 	def forward(self, x):
 		self.lstm.flatten_parameters()
 		_, (h, _) = self.lstm(x)
-		thing = h[0,...]
 		h = h.view(h.shape[1],-1)
 		h = self.drop(h)
 		d = self.dense(h)
-		return self.sm(d)
+		# d = self.sm(d)
+		return d
 
 class HockeyAgent:
 	def __init__(self):
@@ -145,9 +145,9 @@ class HockeyAgent:
 			self.optimizer.zero_grad()
 			current_loss.backward()
 			self.optimizer.step()
-			loss.update(current_loss.item())
 
 			acc1_cur, acc5_cur = get_accuracies(output, y, topk=(1,5))
+			loss.update(current_loss.item())
 			acc1.update(acc1_cur, y.shape[0])
 			acc5.update(acc5_cur, y.shape[0])
 		print('Training epoch '+str(self.cur_epoch)+' | loss: '
