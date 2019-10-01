@@ -128,7 +128,7 @@ class HockeyAgent:
 	def train(self):
 		for self.cur_epoch in range(self.num_epochs):
 			self.train_one_epoch()
-			accuracy = self.validate()
+			# accuracy = self.validate()
 			self.save_checkpoint()
 
 	def train_one_epoch(self):
