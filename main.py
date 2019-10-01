@@ -112,7 +112,7 @@ class HockeyAgent:
 		self.dataset = HockeyDataset(self.data_file, self.input_length)
 		self.num_tokens = self.dataset.num_tokens
 		self.loader = DataLoader(self.dataset, batch_size=self.batch_size, 
-			num_workers=self.num_workers, shuffle=False)
+			num_workers=self.num_workers, shuffle=True)
 		self.model = MyLSTM(self.input_length, self.lstm_dim, self.dropout, self.num_tokens)
 		self.loss = CrossEntropyLoss()
 
@@ -151,8 +151,8 @@ class HockeyAgent:
 			acc1.update(acc1_cur, y.shape[0])
 			acc5.update(acc5_cur, y.shape[0])
 		print('Training epoch '+str(self.cur_epoch)+' | loss: '
-			+str(round(loss.val,5))+' - top 1 accuracy: '+str(round(acc1.val,5))+
-			' - top 5 accuracy: '+str(round(acc5.val,5)))
+			+str(round(loss.val,6))+' - top 1 accuracy: '+str(round(acc1.val,6))+
+			' - top 5 accuracy: '+str(round(acc5.val,6)))
 
 	def save_checkpoint(self, filename='checkpoint.pth.tar', 
 		best_filename='model_best.pth.tar', is_best=False):
@@ -177,8 +177,8 @@ class HockeyAgent:
 			acc1.update(acc1_cur, y.shape[0])
 			acc5.update(acc5_cur, y.shape[0])
 		print('Validating epoch '+str(self.cur_epoch)+' | loss: '
-			+str(round(loss.val,5))+' - top 1 accuracy: '+str(round(acc1.val,5))+
-			' - top 5 accuracy: '+str(round(acc5.val,5)))
+			+str(round(loss.val,6))+' - top 1 accuracy: '+str(round(acc1.val,6))+
+			' - top 5 accuracy: '+str(round(acc5.val,6)))
 
 agent = HockeyAgent()
 agent.run()
