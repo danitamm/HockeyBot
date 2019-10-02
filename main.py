@@ -12,7 +12,9 @@ def get_args():
     parser.add_argument('-wkrs', '--num_workers', default=0, type=int,
     					help='Number of workers for dataloaders?')
     parser.add_argument('-bsize', '--batch_size', default=256, type=int,
-    					help='Batch size for datlaoders?')
+    					help='Batch size for dataloaders?')
+    parser.add_argument('-runstrt', '--running_start', default=False,
+    					type=bool, help='Start from checkpoint?')
     return parser.parse_args()
 
 class AverageMeter:
@@ -101,13 +103,14 @@ class HockeyAgent:
 		args = get_args()
 		self.batch_size = args.batch_size
 		self.num_workers = args.num_workers
+		self.running_start = args.running_start
 
 		self.mode = 'train'
 		self.data_file = 'data/answers.txt'
 		self.input_length = 5
 		self.lstm_dim = 128
 		self.dropout = 0.5
-		self.num_epochs = 100
+		self.num_epochs = 10000
 		# ---------------------------------------
 		self.dataset = HockeyDataset(self.data_file, self.input_length)
 		self.num_tokens = self.dataset.num_tokens
@@ -120,6 +123,8 @@ class HockeyAgent:
 		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		self.model.to(self.device)
 		self.optimizer = Adam(self.model.parameters())
+
+		if self.running_start: self.load_checkpoint()
 
 	def run(self):
 		if self.mode == 'train':
@@ -181,4 +186,13 @@ class HockeyAgent:
 			' - top 5 accuracy: '+str(round(acc5.val,6)))
 
 agent = HockeyAgent()
-agent.run()
+# agent.run()
+
+for x, y in agent.loader:
+	x = x.float()
+	output = agent.model(x)
+	summation = output.sum(1)
+	print(summation.shape)
+	for i in range(summation.shape[0]):
+		print(round(summation[i].item()))
+	break
