@@ -1,115 +1,15 @@
-import argparse
 import numpy as np
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-wkrs', '--num_workers', default=0, type=int,
-    					help='Number of workers for dataloaders?')
-    parser.add_argument('-bsize', '--batch_size', default=256, type=int,
-    					help='Batch size for dataloaders?')
-    parser.add_argument('-runstrt', '--running_start', default=False,
-    					type=bool, help='Start from checkpoint?')
-    parser.add_argument('-epochs', '--num_epochs', default=500,
-    					type=int, help='Number of epochs?')
-    return parser.parse_args()
-
-class AverageMeter:
-	def __init__(self):
-		self.sum = 0
-		self.count = 0
-		self.avg = 0
-
-	def reset(self):
-		self.sum = 0
-		self.count = 0
-		self.avg = 0
-
-	def update(self, val, n=1):
-		self.sum += n*val
-		self.count += n
-		self.avg = self.sum / self.count
-
-	@property
-	def val(self):
-		return self.avg
-
-def get_accuracies(output, target, topk=(1,5)):
-	batch_size = target.shape[0]
-	_, preds = torch.topk(output, max(topk), dim=1)
-	target = target.unsqueeze(-1).expand(preds.shape)
-	compare = preds.eq(target)
-	accs = [compare[:,:k,...].sum().float().item()/batch_size for k in topk]
-	return accs
-
-class HockeyDataset(Dataset):
-	def __init__(self, data_file, input_length):
-		sequence_length = input_length + 1
-
-		all_texts = [[int(tok) for tok in line.strip('\n').split()] for line in open(data_file)]
-		# texts = [text for text in all_texts if len(text) >= sequence_length]
-		# sequences = []
-		# for text in texts:
-		# 	text_subsequences = [text[i:i+sequence_length] for i in range(len(text)-sequence_length+1)]
-		# 	sequences.extend(text_subsequences)
-		texts = [text for text in all_texts if len(text) >= 2]
-		sequences = []
-		for text in texts:
-			text_subsequences = []
-			for i in range(2, len(text)+1):
-				if i < sequence_length:
-					subsequence = (sequence_length - i)*[-1] + text[:i]
-				else:
-					subsequence = text[i-sequence_length:i]
-				text_subsequences.append(subsequence)
-			sequences.extend(text_subsequences)
-
-		self.num_tokens = max([token for text in all_texts for token in text])+1
-		self.input_length = input_length
-		self.sequence_length = sequence_length
-		self.sequences = sequences
-
-	def __len__(self):
-		return len(self.sequences)
-
-	def __getitem__(self, idx):
-		x = np.zeros((self.input_length, self.num_tokens), dtype=np.bool)
-		y = np.zeros(self.num_tokens, dtype=np.bool)
-		for j, tok in enumerate(self.sequences[idx][:-1]):
-			if tok != -1: x[j,tok] = 1
-		y = self.sequences[idx][-1]
-		return x, y
-
-class CrossEntropyLoss(nn.Module):
-	def __init__(self):
-		super(CrossEntropyLoss, self).__init__()
-		self.loss = nn.CrossEntropyLoss()
-
-	def forward(self, preds, labels):
-		return self.loss(preds, labels)
-
-class MyLSTM(nn.Module):
-	def __init__(self, input_length, lstm_dim, dropout, num_tokens):
-		super(MyLSTM, self).__init__()
-		self.lstm = nn.LSTM(input_size=num_tokens, hidden_size=lstm_dim, 
-			batch_first=True, num_layers=1)
-		self.drop = nn.Dropout(p=dropout)
-		self.dense = nn.Linear(lstm_dim, num_tokens)
-		# self.sm = nn.Softmax(dim=1)
-
-	def forward(self, x):
-		self.lstm.flatten_parameters()
-		_, (h, _) = self.lstm(x)
-		h = h.view(h.shape[1],-1)
-		h = self.drop(h)
-		d = self.dense(h)
-		# d = self.sm(d)
-		return d
+from graphs.loss import CrossEntropyLoss
+from graphs.model import MyLSTM
+from datasets.hockeydataset import HockeyDataset
+from utils.util import get_args, get_accuracies, AverageMeter
 
 class HockeyAgent:
 	def __init__(self):
@@ -129,7 +29,7 @@ class HockeyAgent:
 		self.num_tokens = self.dataset.num_tokens
 		self.loader = DataLoader(self.dataset, batch_size=self.batch_size, 
 			num_workers=self.num_workers, shuffle=True)
-		self.model = MyLSTM(self.input_length, self.lstm_dim, self.dropout, self.num_tokens)
+		self.model = MyLSTM(self.input_length, self.lstm_dim, self.num_tokens, dropout=self.dropout)
 		self.loss = CrossEntropyLoss()
 
 		if torch.cuda.device_count() > 1: self.model = nn.DataParallel(self.model)
@@ -180,7 +80,24 @@ class HockeyAgent:
 		if is_best: torch.save(self.model.state_dict(), filename)
 
 	def load_checkpoint(self, filename='checkpoint.pth.tar'):
-		self.model.load_state_dict(torch.load(filename))
+		filename = 'checkpoint747nopad.pth.tar'
+		try:
+			self.model.load_state_dict(torch.load(filename, map_location=self.device))
+			print('Checkpoint loaded as is.')
+		except:
+			# original saved file with DataParallel
+			state_dict = torch.load(filename, map_location=self.device)
+			# create new OrderedDict that does not contain `module.`
+			from collections import OrderedDict
+			new_state_dict = OrderedDict()
+			for k, v in state_dict.items():
+			    name = k[7:] # remove `module.`
+			    new_state_dict[name] = v
+			# load params
+			self.model.load_state_dict(new_state_dict)
+			print('Checkpoint saved in parallel, converted to fit.')
+		# ----------------------------------------------------------
+		# self.model.load_state_dict(torch.load(filename, map_location=self.device))
 
 	def validate(self):
 		self.model.eval()
@@ -203,21 +120,8 @@ class HockeyAgent:
 			' - top 10 accuracy: '+str(round(acc10.val,6)))
 
 agent = HockeyAgent()
-agent.run()
-
-# mydataset = HockeyDataset('data/answers.txt', 5)
-# for i, ((x,y), seq) in enumerate(zip(mydataset, mydataset.sequences)):
-# 	print(x.sum(1),seq)
-# 	if i > 200: break
-
-# for x, y in agent.loader:
-# 	x = x.float()
-# 	output = agent.model(x)
-# 	summation = output.sum(1)
-# 	print(summation.shape)
-# 	for i in range(summation.shape[0]):
-# 		print(round(summation[i].item()))
-# 	break
+# agent.run()
+# agent.validate()
 
 '''
 Best results:

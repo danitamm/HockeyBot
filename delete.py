@@ -1,6 +1,5 @@
 import torch
 
-arr = list(range(10))
+arr = list(range(5))
 
-for i in range(len(arr)):
-	print(arr[:i])
+print(arr[-200:])
