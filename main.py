@@ -16,7 +16,7 @@ def get_args():
     parser.add_argument('-runstrt', '--running_start', default=False,
     					type=bool, help='Start from checkpoint?')
     parser.add_argument('-epochs', '--num_epochs', default=500,
-    					type=str, help='Number of epochs?')
+    					type=int, help='Number of epochs?')
     return parser.parse_args()
 
 class AverageMeter:
