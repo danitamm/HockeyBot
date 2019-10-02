@@ -138,7 +138,7 @@ class HockeyAgent:
 
 	def train_one_epoch(self):
 		self.model.train()
-		loss, acc1, acc5 = AverageMeter(), AverageMeter(), AverageMeter()
+		loss, acc1, acc5, acc10 = AverageMeter(), AverageMeter(), AverageMeter(), AverageMeter()
 		for x, y in tqdm(self.loader):
 			x = x.float()
 			x = x.to(self.device)
@@ -151,13 +151,15 @@ class HockeyAgent:
 			current_loss.backward()
 			self.optimizer.step()
 
-			acc1_cur, acc5_cur = get_accuracies(output, y, topk=(1,5))
+			acc1_cur, acc5_cur, acc10_cur = get_accuracies(output, y, topk=(1,5,10))
 			loss.update(current_loss.item())
 			acc1.update(acc1_cur, y.shape[0])
 			acc5.update(acc5_cur, y.shape[0])
+			acc10.update(acc10_cur, y.shape[0])
 		print('Training epoch '+str(self.cur_epoch)+' | loss: '
 			+str(round(loss.val,6))+' - top 1 accuracy: '+str(round(acc1.val,6))+
-			' - top 5 accuracy: '+str(round(acc5.val,6)))
+			' - top 5 accuracy: '+str(round(acc5.val,6))+
+			' - top 10 accuracy: '+str(round(acc10.val,6)))
 
 	def save_checkpoint(self, filename='checkpoint.pth.tar', 
 		best_filename='model_best.pth.tar', is_best=False):
@@ -169,7 +171,7 @@ class HockeyAgent:
 
 	def validate(self):
 		self.model.eval()
-		loss, acc1, acc5 = AverageMeter(), AverageMeter(), AverageMeter()
+		loss, acc1, acc5, acc10 = AverageMeter(), AverageMeter(), AverageMeter(), AverageMeter()
 		for x, y in tqdm(self.loader):
 			x = x.float()
 			x = x.to(self.device)
@@ -178,21 +180,23 @@ class HockeyAgent:
 			output = self.model(x)
 			current_loss = self.loss(output, y)
 
-			acc1_cur, acc5_cur = get_accuracies(output, y, topk=(1,5))
+			acc1_cur, acc5_cur, acc10_cur = get_accuracies(output, y, topk=(1,5,10))
 			acc1.update(acc1_cur, y.shape[0])
 			acc5.update(acc5_cur, y.shape[0])
+			acc10.update(acc10_cur, y.shape[0])
 		print('Validating epoch '+str(self.cur_epoch)+' | loss: '
 			+str(round(loss.val,6))+' - top 1 accuracy: '+str(round(acc1.val,6))+
-			' - top 5 accuracy: '+str(round(acc5.val,6)))
+			' - top 5 accuracy: '+str(round(acc5.val,6))+
+			' - top 10 accuracy: '+str(round(acc10.val,6)))
 
 agent = HockeyAgent()
-# agent.run()
+agent.run()
 
-for x, y in agent.loader:
-	x = x.float()
-	output = agent.model(x)
-	summation = output.sum(1)
-	print(summation.shape)
-	for i in range(summation.shape[0]):
-		print(round(summation[i].item()))
-	break
+# for x, y in agent.loader:
+# 	x = x.float()
+# 	output = agent.model(x)
+# 	summation = output.sum(1)
+# 	print(summation.shape)
+# 	for i in range(summation.shape[0]):
+# 		print(round(summation[i].item()))
+# 	break
