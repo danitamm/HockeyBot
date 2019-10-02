@@ -15,6 +15,8 @@ def get_args():
     					help='Batch size for dataloaders?')
     parser.add_argument('-runstrt', '--running_start', default=False,
     					type=bool, help='Start from checkpoint?')
+    parser.add_argument('-epochs', '--num_epochs', default=500,
+    					type=str, help='Number of epochs?')
     return parser.parse_args()
 
 class AverageMeter:
@@ -50,10 +52,21 @@ class HockeyDataset(Dataset):
 		sequence_length = input_length + 1
 
 		all_texts = [[int(tok) for tok in line.strip('\n').split()] for line in open(data_file)]
-		texts = [text for text in all_texts if len(text) >= sequence_length]
+		# texts = [text for text in all_texts if len(text) >= sequence_length]
+		# sequences = []
+		# for text in texts:
+		# 	text_subsequences = [text[i:i+sequence_length] for i in range(len(text)-sequence_length+1)]
+		# 	sequences.extend(text_subsequences)
+		texts = [text for text in all_texts if len(text) >= 2]
 		sequences = []
 		for text in texts:
-			text_subsequences = [text[i:i+sequence_length] for i in range(len(text)-sequence_length+1)]
+			text_subsequences = []
+			for i in range(2, len(text)+1):
+				if i < sequence_length:
+					subsequence = (sequence_length - i)*[-1] + text[:i]
+				else:
+					subsequence = text[i-sequence_length:i]
+				text_subsequences.append(subsequence)
 			sequences.extend(text_subsequences)
 
 		self.num_tokens = max([token for text in all_texts for token in text])+1
@@ -68,7 +81,7 @@ class HockeyDataset(Dataset):
 		x = np.zeros((self.input_length, self.num_tokens), dtype=np.bool)
 		y = np.zeros(self.num_tokens, dtype=np.bool)
 		for j, tok in enumerate(self.sequences[idx][:-1]):
-			x[j,tok] = 1
+			if tok != -1: x[j,tok] = 1
 		y = self.sequences[idx][-1]
 		return x, y
 
@@ -104,13 +117,13 @@ class HockeyAgent:
 		self.batch_size = args.batch_size
 		self.num_workers = args.num_workers
 		self.running_start = args.running_start
+		self.num_epochs = args.num_epochs
 
 		self.mode = 'train'
 		self.data_file = 'data/answers.txt'
 		self.input_length = 5
 		self.lstm_dim = 128
 		self.dropout = 0.5
-		self.num_epochs = 10000
 		# ---------------------------------------
 		self.dataset = HockeyDataset(self.data_file, self.input_length)
 		self.num_tokens = self.dataset.num_tokens
@@ -192,6 +205,11 @@ class HockeyAgent:
 agent = HockeyAgent()
 agent.run()
 
+# mydataset = HockeyDataset('data/answers.txt', 5)
+# for i, ((x,y), seq) in enumerate(zip(mydataset, mydataset.sequences)):
+# 	print(x.sum(1),seq)
+# 	if i > 200: break
+
 # for x, y in agent.loader:
 # 	x = x.float()
 # 	output = agent.model(x)
@@ -200,3 +218,11 @@ agent.run()
 # 	for i in range(summation.shape[0]):
 # 		print(round(summation[i].item()))
 # 	break
+
+'''
+Best results:
+loss: 2.55
+top 1: 0.434
+top 5: 0.679
+top 10: 0.768
+'''
