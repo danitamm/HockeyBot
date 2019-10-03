@@ -1,7 +1,7 @@
 # HockeyBot
 Both the command line version and training code for HockeyBot, a Facebook Messenger chatbot. 
 
-HockeyBot assumes that the words is receives from the user are the beginning of an NHL player or coach's interview. It responds with that message, continued for several sentences spoken by a generic player/coach. 
+Sentence completion: HockeyBot assumes that the words it receives from the user are the beginning of an NHL player or coach's interview. It responds with several sentences that follow the input words, as if it were spoken by a generic player/coach.
 
 It is powered by an LSTM is trained on NHL interview transcripts scraped from [ASAP Sports](http://www.asapsports.com/). 
 
