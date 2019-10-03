@@ -1,10 +1,8 @@
 import time
-import requests
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from flask import Flask, jsonify, request
 
 from graphs.model import MyLSTM
 
@@ -107,72 +105,26 @@ model = MyLSTM(input_length, lstm_dim, converter.num_tokens)
 model.eval()
 load_checkpoint(model)
 
-# usr_input = ' '
-# results = get_prediction(usr_input)
-# print(results)
+print('Hello, I\'m the HockeyBot. I\'ve learned from the best and know all there is'+ 
+	' to know about handling sports reporters. Please enter the beginning of your'+
+	' response, and I\'ll gladly finish it for you.\n')
 
-FB_API_URL = 'https://graph.facebook.com/v2.6/me/messages'
-PAGE_ACCESS_TOKEN = 'EAAG6g1Qk10kBAMJHVMz3hIP8BNtZCWSRm7X1v1ZBFzdiuVdhdRM7cRkLN6B3BfXMKaob66R0XVVPTZCDYuvs6TMbKTDh5hZAwWjlmeyFCRNkQhaeZCiA4VFZCKOgM4ltfDJ25qot2ulJty8Evt81wvtZCUkMqf6l4EF1lrwDUZCHSGKwbx4xoX1ZC'
-VERIFY_TOKEN = 'paiiitEeiCkVvVr8sybZanx7bvWhIJ6XMelzmH9NnyM'
-
-app = Flask(__name__)
-
-def send_message(recipient_id, text):
-    """Send a response to Facebook"""
-    payload = {'message':{'text': text}, 'recipient': {'id': recipient_id}, 
-    			'notification_type': 'regular'}
-    auth = {'access_token': PAGE_ACCESS_TOKEN}
-    response = requests.post(FB_API_URL, params=auth, json=payload)
-    return response.json()
-
-def verify_webhook(req):
-    if req.args.get("hub.verify_token") == VERIFY_TOKEN:
-        return req.args.get("hub.challenge")
-    else:
-        return "incorrect"
-
-def respond(sender, message):
-    """Formulate a response to the user and
-    pass it on to a function that sends it."""
-    response = get_prediction(message)
-    send_message(sender, response)
-
-
-def is_user_message(message):
-    """Check if the message is a message from the user"""
-    return (message.get('message') and
-            message['message'].get('text') and
-            not message['message'].get("is_echo"))
-
-@app.route('/webhook', methods=['GET','POST'])
-def listen():
-	if request.method == 'GET':
-		return verify_webhook(request)
-
-	if request.method == 'POST':
-		file = request.json
-		event = file['entry'][0]['messaging']
-		for x in event:
-			if is_user_message(x):
-				text = x['message']['text']
-				sender_id = x['sender']['id']
-				respond(sender_id, text)
-		return 'ok'
-
-# @app.route("/webhook")
-# def listen():
-#     """This is the main function flask uses to 
-#     listen at the `/webhook` endpoint"""
-#     if request.method == 'GET':
-#         return verify_webhook(request)
-
-#     if request.method == 'POST':
-#         payload = request.json
-#         event = payload['entry'][0]['messaging']
-#         for x in event:
-#             if is_user_message(x):
-#                 text = x['message']['text']
-#                 sender_id = x['sender']['id']
-#                 respond(sender_id, text)
-
-#         return "ok"
+while True:
+	usr_input = input('Please enter the beginning of your response, or adjust'+ 
+					' our strategy by entering \'help\'.\n')
+	if usr_input == 'help':
+		max_sentences_raw = input('We\'re currently giving '+str(max_sentences)+
+			' sentence response. Enter your desired number of sentences'+
+			' to change this, or hit enter to keep it the same\n')
+		if max_sentences_raw and max_sentences_raw.isdigit(): max_sentences = int(max_sentences_raw)
+		time.sleep(0.1)
+		temperature_raw = input('We\'re currently giving answers with a freedom of '+
+			str(temperature)+', where 0 is entirely predictable and anything above 3'+ 
+			' becomes incoherent. Enter your desired nonnegative freedom factor,'+ 
+			' or hit enter to keep it the same.\n')
+		if temperature_raw:
+			try: temperature = float(temperature_raw)
+			except: pass
+		continue
+	results = get_prediction(usr_input)
+	print('\n' + results + '\n') 

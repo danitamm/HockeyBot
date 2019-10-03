@@ -172,9 +172,3 @@ def main():
 	save_data(all_interviews, args.targfile)
 
 main()
-
-# url = 'http://www.asapsports.com/show_interview.php?id=150921'
-# page = requests.get(url)
-# soup = BeautifulSoup(page.text, 'html.parser')
-# main_text = soup.find(attrs={'style':'padding: 10px;', 'valign':'top'})
-# print(main_text.prettify())
