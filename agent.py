@@ -95,7 +95,7 @@ class HockeyAgent:
 			    new_state_dict[name] = v
 			# load params
 			self.model.load_state_dict(new_state_dict)
-			print('Checkpoint saved in parallel, converted to fit.')
+			print('Checkpoint saved in parallel, converted for use without parallelization.')
 		# ----------------------------------------------------------
 		# self.model.load_state_dict(torch.load(filename, map_location=self.device))
 
@@ -120,7 +120,7 @@ class HockeyAgent:
 			' - top 10 accuracy: '+str(round(acc10.val,6)))
 
 agent = HockeyAgent()
-# agent.run()
+agent.run()
 # agent.validate()
 
 '''
