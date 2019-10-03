@@ -1,4 +1,5 @@
 from collections import Counter
+import nltk
 
 min_frequency = 3
 

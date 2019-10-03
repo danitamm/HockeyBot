@@ -1,4 +1,5 @@
 import time
+import requests
 import numpy as np
 import torch
 import torch.nn as nn
@@ -96,11 +97,11 @@ def get_prediction(usr_input):
 
 
 token_file = 'data/tokens.txt'
-checkpoint_file = 'checkpoint747nopad.pth.tar'
+checkpoint_file = 'checkpoint600pad.pth.tar'
 input_length = 5
 lstm_dim = 128
 temperature = 0.75
-max_sentences = 3
+max_sentences = 5
 converter = Converter(token_file, input_length)
 model = MyLSTM(input_length, lstm_dim, converter.num_tokens)
 model.eval()
@@ -110,19 +111,68 @@ load_checkpoint(model)
 # results = get_prediction(usr_input)
 # print(results)
 
+FB_API_URL = 'https://graph.facebook.com/v2.6/me/messages'
+PAGE_ACCESS_TOKEN = 'EAAG6g1Qk10kBAMJHVMz3hIP8BNtZCWSRm7X1v1ZBFzdiuVdhdRM7cRkLN6B3BfXMKaob66R0XVVPTZCDYuvs6TMbKTDh5hZAwWjlmeyFCRNkQhaeZCiA4VFZCKOgM4ltfDJ25qot2ulJty8Evt81wvtZCUkMqf6l4EF1lrwDUZCHSGKwbx4xoX1ZC'
+VERIFY_TOKEN = 'paiiitEeiCkVvVr8sybZanx7bvWhIJ6XMelzmH9NnyM'
 
 app = Flask(__name__)
 
-@app.route('/predict', methods=['POST'])
-def predict():
-	if request.method == 'POST':
-		file = request.files['text']
-		text = str(file.read(), 'utf-8')
-		prediction = get_prediction(text)
-		return jsonify(prediction)
+def send_message(recipient_id, text):
+    """Send a response to Facebook"""
+    payload = {'message':{'text': text}, 'recipient': {'id': recipient_id}, 
+    			'notification_type': 'regular'}
+    auth = {'access_token': PAGE_ACCESS_TOKEN}
+    response = requests.post(FB_API_URL, params=auth, json=payload)
+    return response.json()
 
-# @app.route('/')
-# def predict():
-# 	usr_input = ' '
-# 	results = get_prediction(usr_input)
-# 	return results
+def verify_webhook(req):
+    if req.args.get("hub.verify_token") == VERIFY_TOKEN:
+        return req.args.get("hub.challenge")
+    else:
+        return "incorrect"
+
+def respond(sender, message):
+    """Formulate a response to the user and
+    pass it on to a function that sends it."""
+    response = get_prediction(message)
+    send_message(sender, response)
+
+
+def is_user_message(message):
+    """Check if the message is a message from the user"""
+    return (message.get('message') and
+            message['message'].get('text') and
+            not message['message'].get("is_echo"))
+
+@app.route('/webhook', methods=['GET','POST'])
+def listen():
+	if request.method == 'GET':
+		return verify_webhook(request)
+
+	if request.method == 'POST':
+		file = request.json
+		event = file['entry'][0]['messaging']
+		for x in event:
+			if is_user_message(x):
+				text = x['message']['text']
+				sender_id = x['sender']['id']
+				respond(sender_id, text)
+		return 'ok'
+
+# @app.route("/webhook")
+# def listen():
+#     """This is the main function flask uses to 
+#     listen at the `/webhook` endpoint"""
+#     if request.method == 'GET':
+#         return verify_webhook(request)
+
+#     if request.method == 'POST':
+#         payload = request.json
+#         event = payload['entry'][0]['messaging']
+#         for x in event:
+#             if is_user_message(x):
+#                 text = x['message']['text']
+#                 sender_id = x['sender']['id']
+#                 respond(sender_id, text)
+
+#         return "ok"
