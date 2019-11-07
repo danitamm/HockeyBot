@@ -1,4 +1,4 @@
-# HockeyBot
+# hockey-bot
 Both the command line version and training code for HockeyBot, a Facebook Messenger chatbot. 
 
 Sentence completion: HockeyBot assumes that the words it receives from the user are the beginning of an NHL player or coach's interview. It responds with several sentences that follow the input words, as if it were spoken by a generic player/coach.
