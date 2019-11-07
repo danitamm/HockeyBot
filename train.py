@@ -80,7 +80,8 @@ class HockeyAgent:
 		if is_best: torch.save(self.model.state_dict(), filename)
 
 	def load_checkpoint(self, filename='checkpoint.pth.tar'):
-		filename = 'checkpoint747nopad.pth.tar'
+		filename = 'checkpoint600pad.pth.tar'
+		self.cur_epoch = 600
 		try:
 			self.model.load_state_dict(torch.load(filename, map_location=self.device))
 			print('Checkpoint loaded as is.')
@@ -120,8 +121,8 @@ class HockeyAgent:
 			' - top 10 accuracy: '+str(round(acc10.val,6)))
 
 agent = HockeyAgent()
-agent.run()
-# agent.validate()
+# agent.run()
+agent.validate()
 
 '''
 Best results:

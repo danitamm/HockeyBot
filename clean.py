@@ -46,3 +46,28 @@ for answer in answers:
 # 	for token in tknzd_answer: f.write(str(token)+' ')
 # 	f.write('\n ')
 # f.close()
+
+# --------------------------------------------------------------
+# FOR STUDYING DATASET:
+'''
+words = [word for line in answers for word in line]
+# grams = nltk.ngrams(words,5)
+# fdist = nltk.FreqDist(grams)
+# seq = fdist.most_common(10)
+# print(seq)
+
+# "it's going to be a" occurs 88 times
+
+total = 0
+counter = 0
+grams = nltk.ngrams(words,6)
+fdist = nltk.FreqDist(grams)
+seq = ('it\'s', 'going', 'to', 'be', 'a')
+for words, count in fdist.items():
+	if words[:-1] == seq:
+		total += count
+		counter += 1
+		print(words[-1], count)
+print(total)
+print(counter)
+'''
