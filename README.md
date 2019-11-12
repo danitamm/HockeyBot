@@ -9,10 +9,10 @@ Follow this [link](m.me/102447081166159) to see Facebook Messenger bot. It is cu
 
 ## Running The Chatbot Command Line Interface
 ```
-git clone <this repo's url>
-virtualenv <envname> --python=3.7.3
-source <envname>/bin/activate
-cd HockeyBot
+git clone https://github.com/danitamm/hockey-bot.git
+cd hockey-bot
+virtualenv -p python3 env
+source env/bin/activate
 pip install -r requirements.txt
 python bot.py
 ```
