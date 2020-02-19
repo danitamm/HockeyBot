@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from graphs.model import MyLSTM
+from plotting import compare_temps
 
 class BotAgent():
 	def __init__(self, token_file, checkpoint_file, input_length, lstm_dim,
@@ -29,7 +30,8 @@ class BotAgent():
 
 	def load_checkpoint(self):
 		try:
-			self.model.load_state_dict(torch.load(checkpoint_file, map_location='cpu'))
+			self.model.load_state_dict(
+				torch.load(checkpoint_file, map_location='cpu'))
 			print('Checkpoint loaded as is.\n')
 		except:
 			# original saved file with DataParallel
@@ -54,11 +56,13 @@ class BotAgent():
 		self.words = usr_input.split()
 		recent_words = self.words[-self.input_length:]
 		seq = [self.to_tok(word) for word in recent_words]
-		if len(seq) < self.input_length: seq = (self.input_length-len(seq))*[-1] + seq
+		if len(seq) < self.input_length:
+			seq = (self.input_length-len(seq))*[-1] + seq
 		self.sequence = seq
 
 	def seq_to_tensor(self):
-		x = torch.zeros((self.input_length, self.num_tokens), dtype=torch.float)
+		x = torch.zeros(
+			(self.input_length, self.num_tokens), dtype=torch.float)
 		for i, tok in enumerate(self.sequence):
 			if tok != -1: x[i,tok] = 1
 		x = x.unsqueeze(0)
@@ -99,22 +103,29 @@ class BotAgent():
 		return self.get_words()
 
 	def run_usr_interface(self):
-		print('Hello, I\'m the HockeyBot. I\'ve learned from the best and know all there is'+ 
-			' to know about handling sports reporters. Please enter the beginning of your'+
-			' response, and I\'ll gladly finish it for you.\n')
+		print('Hello, I\'m the HockeyBot. I\'ve learned from the best and'
+			  ' know all there is to know about handling sports reporters.'
+			  ' Please enter the beginning of your response, and I\'ll'
+			  ' gladly finish it for you.\n')
 
 		while True:
-			usr_input = input('Please enter the beginning of your response, or adjust'+ 
-							' our strategy by entering \'help\'.\n')
+			usr_input = input('Please enter the beginning of your response,'
+							  ' or adjust our strategy by'
+							  ' entering \'help\'.\n')
 			if usr_input == 'help':
-				max_sentences_raw = input('We\'re currently giving '+str(self.max_sentences)+
-					' sentence response. Enter your desired number of sentences'+
-					' to change this, or hit enter to keep it the same\n')
-				if max_sentences_raw and max_sentences_raw.isdigit(): self.max_sentences = int(max_sentences_raw)
+				max_sentences_raw = input(
+					'We\'re currently giving '+str(self.max_sentences)+
+					' sentence response. Enter your desired number of'
+					' sentences to change this, or hit enter to keep it'
+					' the same\n')
+				if max_sentences_raw and max_sentences_raw.isdigit(): 
+					self.max_sentences = int(max_sentences_raw)
 				time.sleep(0.1)
-				temperature_raw = input('We\'re currently giving answers with a freedom of '+
-					str(self.temperature)+', where 0 is entirely predictable and anything above 3'+ 
-					' becomes incoherent. Enter your desired nonnegative freedom factor,'+ 
+				temperature_raw = input(
+					'We\'re currently giving answers with a freedom of '
+					+str(self.temperature)+', where 0 is entirely'
+					' predictable and anything above 3 becomes incoherent.'
+					' Enter your desired nonnegative freedom factor,'
 					' or hit enter to keep it the same.\n')
 				if temperature_raw:
 					try: self.temperature = float(temperature_raw)
@@ -130,5 +141,12 @@ input_length = 5
 lstm_dim = 128
 temperature = 0.75
 max_sentences = 5
-agent = BotAgent(token_file, checkpoint_file, input_length, lstm_dim, temperature, max_sentences)
+agent = BotAgent(token_file, checkpoint_file, input_length, 
+				 lstm_dim, temperature, max_sentences)
 agent.run_usr_interface()
+
+# words = 'well you know'
+# agent.store_tokenized_raw_input(words)
+# x = agent.seq_to_tensor()
+# output = agent.model(x).view(-1)
+# compare_temps(output, 2, 0.5)
