@@ -1,5 +1,5 @@
 # Update
-The chatbot has been approved by Facebook and you can follow [this](m.me/102447081166159) link to interact with it. For over 4 months it has maintained a 100% response rate within 30 seconds of receiving a message. 
+The chatbot has been approved by Facebook and you can follow [this](m.me/102447081166159) link to interact with it. Active for over 4 months, it has maintained a 100% response rate within 30 seconds of receiving a message. 
 
 # hockey-bot
 Both the command line version and training code for HockeyBot, a Facebook Messenger chatbot. 
