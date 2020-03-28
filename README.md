@@ -5,7 +5,8 @@ Sentence completion: HockeyBot assumes that the words it receives from the user 
 
 It is powered by an LSTM is trained on NHL interview transcripts scraped from [ASAP Sports](http://www.asapsports.com/). 
 
-Follow this [link](m.me/102447081166159) to see Facebook Messenger bot. It is currently under review by Facebook, so only myself and testers can use it. 
+## Update
+The chatbot has been approved by Facebook and you can follow [this](m.me/102447081166159) link to interact with it. It maintains a 100% response rate within 30 seconds of receiving a message. 
 
 ## Running The Chatbot Command Line Interface
 ```
