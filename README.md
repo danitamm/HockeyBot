@@ -11,7 +11,7 @@ It is powered by an LSTM is trained on NHL interview transcripts scraped from [A
 
 ## Running The Chatbot Command Line Interface
 ```
-git clone https://github.com/danitamm/hockey-bot.git
+git clone https://github.com/danieltamming/hockey-bot.git
 cd hockey-bot
 virtualenv -p python3 env
 source env/bin/activate
